@@ -1,0 +1,37 @@
+FROM php:7.3-apache-stretch
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    apt-get update && \
+    apt-get -y upgrade && \
+    apt-get -y install git libzip-dev zip nodejs openssh-server libicu-dev libpng-dev libfreetype6-dev libjpeg62-turbo-dev && \
+    npm install yarn && \
+    docker-php-ext-install mysqli zip pdo pdo_mysql intl gd  && docker-php-ext-enable mysqli zip pdo pdo_mysql intl \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+    pecl install xdebug && docker-php-ext-enable xdebug && \
+    a2enmod rewrite
+
+RUN docker-php-ext-install opcache
+ADD ./docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+ADD ./docker/apache/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+
+
+#RUN echo 'zend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20180731/xdebug.so' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'xdebug.remote_enable=on' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'xdebug.remote_autostart=off' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'xdebug.remote_port=9000' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'xdebug.idekey=PHPSTORM' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'xdebug.remote_host=172.17.0.1' >> /usr/local/etc/php/conf.d/xdebug.ini
+RUN echo 'memory_limit = 2G' >> /usr/local/etc/php/conf.d/php-memory.ini
+
+ARG APCU_VERSION=5.1.11
+#INSTALL APCU
+RUN pecl install apcu-${APCU_VERSION} && docker-php-ext-enable apcu
+#RUN echo "extension=apcu.so" >> /usr/local/etc/php/conf.d/apcu.ini
+RUN echo "apc.enable_cli=1" >> /usr/local/etc/php/conf.d/apcu.ini
+RUN echo "apc.enable=1" >> /usr/local/etc/php/conf.d/apcu.ini
+#APCU
+
+#COPY ./src /var/www/html/
+EXPOSE 80
+WORKDIR  /var/www/html/

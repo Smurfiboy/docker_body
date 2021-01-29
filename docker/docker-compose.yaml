@@ -1,0 +1,29 @@
+version: "3.3"
+services:
+    apache:
+        build:
+            context: ../.
+            dockerfile: docker/apache/dockerfile
+        environment:
+            - TZ=Europe/Amsterdam
+        ports:
+          - "8081:80"
+        volumes:
+           - "../src:/var/www/html"
+    mysql:
+        build:
+          context: ../.
+          dockerfile: docker/mariadb/dockerfile
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - TZ=Europe/Amsterdam
+        ports:
+          - "3508:3306"
+        volumes:
+            - "../.mysql:/var/lib/mysql"
+
+networks:
+  default:
+    external:
+      name: proconf-schaafw
+
